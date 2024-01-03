@@ -19,3 +19,9 @@ export enum VerificationType {
   TOKEN = 'Token',
   OTP = 'OTP',
 }
+
+export enum StatusType {
+  LIVE = 'Live',
+  SOLD = 'Sold',
+  DELIVERED = 'Delivered',
+}
