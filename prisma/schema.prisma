@@ -26,6 +26,7 @@ model User {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("update_at")
   deletedAt DateTime? @map("deleted_at")
+  purchasedProducts String[]
 
   @@map("users")
 }
@@ -44,4 +45,44 @@ enum RoleType {
   Buyer
   Seller
   SuperAdmin
+}
+
+
+model Product {
+  id Int @id @default(autoincrement())
+  name String
+  description String
+  images String[]
+  minimumBid Int
+  status StatusType
+  SellerId Int
+}
+
+enum StatusType {
+  NotActive
+  Live
+  Sold
+  Delivered
+}
+
+
+model Auction {
+
+  id Int @id @default(autoincrement())
+  name String
+  startTime DateTime
+  endTime DateTime
+  minimumBids Int?
+  isApproved Boolean @default(false)
+  sellerId Int
+  products Int[]
+  isLive Boolean @default(false)
+  winnerId Int?
+}
+
+model bids {
+  id Int @id @default(autoincrement())
+  amount Int
+  BidderId Int
+  autionId Int
 }
