@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Product" ALTER COLUMN "MaximumBid" DROP NOT NULL,
+ALTER COLUMN "timeBid" DROP NOT NULL,
+ALTER COLUMN "winnerId" DROP NOT NULL;
