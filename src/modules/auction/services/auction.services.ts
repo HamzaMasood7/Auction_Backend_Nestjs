@@ -8,6 +8,7 @@ import { CreateAuctionDto } from '../dto/create-auction.dto';
 import { UserInterface } from 'src/modules/user/interface/user.interface';
 import { RoleType } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { UpdateAuctionDto } from '../dto/update-auction.dto';
 
 @Injectable()
 export class AuctionService {
@@ -94,34 +95,114 @@ export class AuctionService {
     return auction;
   }
 
-  // @Cron(CronExpression.EVERY_SECOND)
-  // async updateLiveAuctions() {
-  //   const currentTime = new Date();
+  async updateAuction(
+    id: number,
+    updateAuctionDto: UpdateAuctionDto,
+    loggedInUser: UserInterface,
+  ) {
+    const existingAuction = await this.findAuctionById(id);
 
-  //   const res = await this.prisma.auction.updateMany({
-  //     where: {
-  //       isApproved: true,
-  //       startTime: { gte: currentTime },
-  //       // endTime: { lt: currentTime },
-  //       isLive: false,
-  //     },
-  //     data: { isLive: true },
-  //   });
+    if (
+      existingAuction.sellerId !== loggedInUser.id ||
+      loggedInUser.role !== RoleType.SuperAdmin
+    ) {
+      throw new BadRequestException(
+        'User does not have permission to update this auction',
+      );
+    }
 
-  //   console.log(res);
-  // }
+    const { startTime, endTime } = updateAuctionDto;
 
-  // @Cron(CronExpression.EVERY_SECOND)
-  // async UnLiveAuctions() {
-  //   const currentTime = new Date();
+    if (startTime && startTime <= new Date()) {
+      throw new BadRequestException(
+        'Start time must be greater than the current time',
+      );
+    }
 
-  //   const res = await this.prisma.auction.updateMany({
-  //     where: {
-  //       endTime: { lt: currentTime },
-  //       isLive: true,
-  //     },
-  //     data: { isLive: false },
-  //   });
-  //   console.log(res);
-  // }
+    if (endTime && endTime <= startTime) {
+      throw new BadRequestException(
+        'End time must be greater than the start time',
+      );
+    }
+
+    const updatedAuction = await this.prisma.auction.update({
+      where: { id },
+      data: updateAuctionDto,
+    });
+
+    return {
+      message: `Auction with ID ${id} has been updated`,
+      updatedAuction,
+    };
+  }
+
+  async getAllAuctions() {
+    const auctions = await this.prisma.auction.findMany();
+
+    if (!auctions || auctions.length === 0) {
+      throw new NotFoundException('No auctions found');
+    }
+
+    return auctions;
+  }
+
+  async getLiveAuctions() {
+    const liveAuctions = await this.prisma.auction.findMany({
+      where: { isLive: true },
+    });
+
+    return liveAuctions;
+  }
+
+  async deleteAuction(id: number, loggedInUser: UserInterface) {
+    const existingAuction = await this.findAuctionById(id);
+
+    if (
+      existingAuction.sellerId !== loggedInUser.id &&
+      loggedInUser.role !== RoleType.SuperAdmin
+    ) {
+      throw new BadRequestException(
+        'User does not have permission to delete this auction',
+      );
+    }
+
+    const deletedAuction = await this.prisma.auction.delete({
+      where: { id },
+    });
+
+    return {
+      message: `Auction with ID ${id} has been deleted`,
+      deletedAuction,
+    };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async updateLiveAuctions() {
+    const currentTime = new Date();
+
+    const res = await this.prisma.auction.updateMany({
+      where: {
+        isApproved: true,
+        startTime: { lt: currentTime },
+        endTime: { gt: currentTime },
+        isLive: false,
+      },
+      data: { isLive: true },
+    });
+    console.log('Start: ', res);
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async UnLiveAuctions() {
+    const currentTime = new Date();
+
+    const res = await this.prisma.auction.updateMany({
+      where: {
+        endTime: { lte: currentTime },
+        isLive: true,
+      },
+      data: { isLive: false },
+    });
+    console.log('End: ', res);
+  }
 }

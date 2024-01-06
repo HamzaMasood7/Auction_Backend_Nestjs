@@ -14,6 +14,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/auth.guard';
 import { AuctionService } from '../services/auction.services';
 import { User } from 'src/decorators/user.decorator';
 import { CreateAuctionDto } from '../dto/create-auction.dto';
+import { AdminGuard } from 'src/modules/admin/guards/admin.guard';
 
 @UseGuards(JwtAuthGuard)
 @Controller('Auction')
@@ -30,6 +31,7 @@ export class AuctionController {
     return res;
   }
 
+  @UseGuards(AdminGuard)
   @Patch('admin/approve/:auctionId')
   async approveAuction(
     @Param('auctionId', ParseIntPipe) id: number,
@@ -40,18 +42,43 @@ export class AuctionController {
     return res;
   }
 
-  @Delete()
-  deleteAuction() {}
+  @Patch(':id')
+  async updateAuction(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateAuctionDto: any,
+    @User() user: any,
+  ) {
+    const res = await this.auctionService.updateAuction(
+      id,
+      updateAuctionDto,
+      user,
+    );
 
-  @Get()
-  getAuction() {}
+    return res;
+  }
 
-  @Get()
-  getAllUserAuctions() {}
+  @Get('live')
+  async getLiveAuctions() {
+    const res = await this.auctionService.getLiveAuctions();
+    return res;
+  }
 
-  @Patch()
-  updateAuction() {}
+  @UseGuards(AdminGuard)
+  @Get('all')
+  async getAllAuctions() {
+    const res = await this.auctionService.getAllAuctions();
 
-  @Get()
-  getAuctionByStatus() {}
+    return res;
+  }
+
+  @UseGuards(AdminGuard)
+  @Delete(':id')
+  async deleteAuction(
+    @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
+  ) {
+    const res = await this.auctionService.deleteAuction(id, user);
+
+    return res;
+  }
 }
