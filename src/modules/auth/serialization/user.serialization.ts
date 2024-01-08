@@ -17,6 +17,9 @@ export class UserSerialization {
   phone: string;
 
   @Expose()
+  role: string;
+
+  @Expose()
   birthDate: Date;
 
   @Expose()

@@ -8,6 +8,7 @@ import { CreateAuctionDto } from '../dto/create-auction.dto';
 import { UserInterface } from 'src/modules/user/interface/user.interface';
 import { RoleType } from '@prisma/client';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { StatusType } from 'src/modules/user/constants/user';
 
 @Injectable()
 export class AuctionService {
@@ -94,34 +95,76 @@ export class AuctionService {
     return auction;
   }
 
-  // @Cron(CronExpression.EVERY_SECOND)
-  // async updateLiveAuctions() {
-  //   const currentTime = new Date();
+  async addProductToAuction(auctionId: number, productId: number) {
+    const auction = await this.findAuctionById(auctionId);
 
-  //   const res = await this.prisma.auction.updateMany({
-  //     where: {
-  //       isApproved: true,
-  //       startTime: { gte: currentTime },
-  //       // endTime: { lt: currentTime },
-  //       isLive: false,
-  //     },
-  //     data: { isLive: true },
-  //   });
+    if (auction.startTime <= new Date()) {
+      // Auction has started, update product status to live
+      await this.prisma.product.update({
+        where: { id: productId },
+        data: { status: StatusType.LIVE },
+      });
+    }
 
-  //   console.log(res);
-  // }
+    // Add the product to the auction
+    const updatedAuction = await this.prisma.auction.update({
+      where: { id: auctionId },
+      data: { products: { set: [...(auction.products || []), productId] } },
+    });
 
-  // @Cron(CronExpression.EVERY_SECOND)
-  // async UnLiveAuctions() {
-  //   const currentTime = new Date();
+    return updatedAuction;
+  }
 
-  //   const res = await this.prisma.auction.updateMany({
-  //     where: {
-  //       endTime: { lt: currentTime },
-  //       isLive: true,
-  //     },
-  //     data: { isLive: false },
-  //   });
-  //   console.log(res);
-  // }
+  async deleteProductFromAuction(auctionId: number, productId: number) {
+    const auction = await this.findAuctionById(auctionId);
+
+    // Remove the product ID from the array of products
+    const updatedAuction = await this.prisma.auction.update({
+      where: { id: auctionId },
+      data: {
+        products: {
+          set: (auction.products || []).filter((id) => id !== productId),
+        },
+      },
+    });
+
+    // Update the product status to notActive
+    await this.prisma.product.update({
+      where: { id: productId },
+      data: { status: StatusType.NOTACTIVE },
+    });
+
+    return updatedAuction;
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async updateLiveAuctions() {
+    const currentTime = new Date();
+
+    const res = await this.prisma.auction.updateMany({
+      where: {
+        isApproved: true,
+        startTime: { gte: currentTime },
+        // endTime: { lt: currentTime },
+        isLive: false,
+      },
+      data: { isLive: true },
+    });
+
+    console.log(res);
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async UnLiveAuctions() {
+    const currentTime = new Date();
+
+    const res = await this.prisma.auction.updateMany({
+      where: {
+        endTime: { lt: currentTime },
+        isLive: true,
+      },
+      data: { isLive: false },
+    });
+    console.log(res);
+  }
 }
