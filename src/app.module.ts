@@ -8,6 +8,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ProductModule } from './modules/products/products.module';
 import { AuctionModule } from './modules/auction/auction.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BiddingModule } from './modules/bidding/bidding.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ProductModule,
     AuctionModule,
     ScheduleModule.forRoot(),
+    BiddingModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, JwtService],

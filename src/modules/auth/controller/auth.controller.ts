@@ -8,7 +8,7 @@ import { Response } from 'express';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('registration')
+  @Post('register')
   async registration(
     @Body() userRegistration: UserRegistrationDto,
     @Res({ passthrough: true }) response: Response,

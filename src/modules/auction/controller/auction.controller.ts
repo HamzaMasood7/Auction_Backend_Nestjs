@@ -40,6 +40,31 @@ export class AuctionController {
     return res;
   }
 
+  @Post(':auctionId/add-product/:productId')
+  async addProductToAuction(
+    @Param('auctionId', ParseIntPipe) auctionId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+  ) {
+    const res = await this.auctionService.addProductToAuction(
+      auctionId,
+      productId,
+    );
+
+    return res;
+  }
+
+  @Patch('deleteProduct/:auctionId/:productId')
+  async deleteProductFromAuction(
+    @Param('auctionId', ParseIntPipe) auctionId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+  ) {
+    const res = await this.auctionService.deleteProductFromAuction(
+      auctionId,
+      productId,
+    );
+    return res;
+  }
+
   @Delete()
   deleteAuction() {}
 

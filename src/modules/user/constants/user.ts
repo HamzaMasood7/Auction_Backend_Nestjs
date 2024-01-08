@@ -21,6 +21,7 @@ export enum VerificationType {
 }
 
 export enum StatusType {
+  NOTACTIVE = 'NotActive',
   LIVE = 'Live',
   SOLD = 'Sold',
   DELIVERED = 'Delivered',

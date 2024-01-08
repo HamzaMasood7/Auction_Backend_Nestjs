@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/database/prisma.service';
 import { UserRegistrationDto } from 'src/modules/user/dto/registration.dto';
@@ -60,7 +64,7 @@ export class AuthService {
     const { email, password } = userLoginDto;
     const user = await this.prisma.user.findUnique({ where: { email } });
 
-    if (!user) return { message: 'No user Found' };
+    if (!user) throw new NotFoundException('User not found');
 
     const { salt } = user;
     const isPasswordMatch = await bcrypt.compare(
@@ -68,7 +72,7 @@ export class AuthService {
       user.password,
     );
 
-    if (!isPasswordMatch) return { message: 'Incorrect Password' };
+    if (!isPasswordMatch) throw new NotFoundException('User not found');
     const userObj = {
       uuid: user.uuid,
       role: user.role,
@@ -76,7 +80,7 @@ export class AuthService {
     };
     const token = await this.jwtService.signAsync({ userObj });
     return {
-      message: 'loged in',
+      message: 'logged in',
       data: await this.serializeUserProfile(user),
       token,
     };

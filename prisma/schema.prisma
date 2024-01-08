@@ -87,5 +87,6 @@ model bids {
   id Int @id @default(autoincrement())
   amount Int
   BidderId Int
-  autionId Int
+  productId Int
+  bidTime DateTime
 }
